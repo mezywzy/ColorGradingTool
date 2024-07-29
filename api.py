@@ -14,6 +14,9 @@ app.config['RESULT_FOLDER_1'] = 'results_1'
 app.config['RESULT_FOLDER_2'] = 'results_2'
 app.config['RESULT_FOLDER_3'] = 'results_3'
 
+def generate_file_name(ext):
+    return f"{uuid.uuid4().hex}.{ext}"
+
 # =============== 上传图片接口 ===============
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
@@ -42,7 +45,7 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         ext = filename.rsplit('.', 1)[1].lower()
-        unique_filename = f"{uuid.uuid4()}.{ext}"
+        unique_filename = generate_file_name(ext)
         date_folder = datetime.datetime.now().strftime('%Y-%m-%d')
         save_folder = os.path.join(app.config['FILE_ROOT'], app.config['UPLOAD_FOLDER'], date_folder)
         create_folder_if_not_exists(save_folder)
@@ -106,13 +109,13 @@ def process_image(request, result_folder, process_func):
     gradation = request.form.get('gradation', 3)
     grayscale = request.form.get('grayscale', 0)
     # 随机生成输出文件名
-    output_name = f"{uuid.uuid4()}.png"
+    output_name = generate_file_name('png')
     date_folder = datetime.datetime.now().strftime('%Y-%m-%d')
     save_folder = os.path.join(app.config['FILE_ROOT'], result_folder, date_folder)
     create_folder_if_not_exists(save_folder)
     output_path = os.path.join(save_folder, output_name)
     try:
-        process_func(input_path, output_path, grayscale=bool(grayscale), gradation=int(gradation))
+        process_func(input_path, output_path, grayscale=bool(int(grayscale)), gradation=int(gradation))
         file_path = os.path.join(result_folder, date_folder, output_name)
         return jsonify({'file_path': file_path}), 200
     except Exception as e:
@@ -159,7 +162,7 @@ def adjust_contrast():
     if not os.path.exists(input_path):
         return jsonify({'error': 'file not found'}), 404
     contrast = request.form.get('contrast', 1)
-    output_name = f"{uuid.uuid4()}.png"
+    output_name = generate_file_name('png')
     date_folder = datetime.datetime.now().strftime('%Y-%m-%d')
     result_folder = app.config['RESULT_FOLDER_3']
     save_folder = os.path.join(app.config['FILE_ROOT'], result_folder, date_folder)
